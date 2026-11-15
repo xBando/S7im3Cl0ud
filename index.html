@@ -119,26 +119,338 @@ button,input{font:inherit}button{cursor:pointer;color:inherit}a{color:inherit;te
     </div>
   </div>
 </div>
+
 <audio id="audio"></audio>
+
 <script>
-const demoTracks=[
- {id:'d1',title:'Night Shift',artist:'Nova Bloom',genre:'Electronic · 124 BPM',symbol:'NB',color:'',url:'https://cdn.pixabay.com/download/audio/2022/10/25/audio_946e0a2b1d.mp3?filename=lofi-study-112191.mp3',download:false,likes:1284,reposts:86},
- {id:'d2',title:'Green Light',artist:'Kairo West',genre:'Hip-hop · Independent',symbol:'KW',url:'https://cdn.pixabay.com/download/audio/2022/03/15/audio_783c8c9f2d.mp3?filename=hip-hop- chill-ambient-110397.mp3',download:true,likes:842,reposts:42},
- {id:'d3',title:'After Hours (Instrumental)',artist:'Thunder Beatz',genre:'Instrumental · Beat',symbol:'TB',url:'',download:false,likes:506,reposts:31}
+const demoTracks = [
+  {
+    id: 'd1',
+    title: 'Night Shift',
+    artist: 'Nova Bloom',
+    genre: 'Electronic · 124 BPM',
+    symbol: 'NB',
+    url: 'https://cdn.pixabay.com/download/audio/2022/10/25/audio_946e0a2b1d.mp3?filename=lofi-study-112191.mp3',
+    download: false,
+    likes: 1284
+  },
+  {
+    id: 'd2',
+    title: 'Green Light',
+    artist: 'Kairo West',
+    genre: 'Hip-hop · Independent',
+    symbol: 'KW',
+    url: '',
+    download: true,
+    likes: 842
+  },
+  {
+    id: 'd3',
+    title: 'After Hours (Instrumental)',
+    artist: 'Thunder Beatz',
+    genre: 'Instrumental · Beat',
+    symbol: 'TB',
+    url: '',
+    download: false,
+    likes: 506
+  }
 ];
-let tracks=[...demoTracks], likes=new Set(), reposts=new Set(), current=null;
-const audio=document.getElementById('audio');
-const $=id=>document.getElementById(id);
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function time(t){if(!Number.isFinite(t))return'0:00';return Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0')}
-function trackHTML(t){return `<div class="track"><div class="cover ${t.id==='d2'?'alt':''}">${esc(t.symbol||'7C')}</div><div class="trackinfo"><div class="artist">${esc(t.artist)} <span class="tag">${t.id[0]==='u'?'YOUR UPLOAD':'TRACK'}</span></div><div class="name">${esc(t.title)}</div><div class="meta">${esc(t.genre||'Independent music')} · ${Number(t.likes||0).toLocaleString()} plays</div></div><div class="actions"><button class="play" title="Play" data-play="${t.id}">▶</button><button class="${likes.has(t.id)?'on':''}" title="Like" data-like="${t.id}">♥</button><button class="${reposts.has(t.id)?'on':''}" title="Repost" data-repost="${t.id}">⟳</button>${t.download?`<button title="Download" data-download="${t.id}">↓</button>`:''}</div></div>`}
-function render(){let q=$('search').value.toLowerCase();let filtered=tracks.filter(t=>(t.title+' '+t.artist+' '+(t.genre||'')).toLowerCase().includes(q));$('trackList').innerHTML=filtered.filter(t=>!t.id.startsWith('u')).map(trackHTML).join('')||'<div class="empty">No tracks match that search.</div>';let up=filtered.filter(t=>t.id.startsWith('u'));$('uploads').innerHTML=up.map(trackHTML).join('')||'<div class="empty">No uploads yet.</div>';let liked=tracks.filter(t=>likes.has(t.id));$('likes').innerHTML=liked.map(trackHTML).join('')||'<div class="empty">Tracks you heart will show up here.</div>';$('count').textContent=filtered.length+' tracks'}
-function play(id){let t=tracks.find(x=>x.id===id);if(!t)return;if(!t.url){alert('This sample track has no playable audio attached. Upload your own audio to test the player.');return}current=t;audio.src=t.url;audio.play().catch(()=>alert('This sample audio source is unavailable. Upload an audio file to test playback.'));$('nowName').textContent=t.title;$('nowArtist').textContent=t.artist;$('nowCover').textContent=t.symbol||'7C';$('playPause').textContent='Ⅱ'}
-document.addEventListener('click',e=>{let b=e.target.closest('button');if(!b)return;if(b.dataset.play)play(b.dataset.play);if(b.dataset.like){let id=b.dataset.like;likes.has(id)?likes.delete(id):likes.add(id);render()}if(b.dataset.repost){let id=b.dataset.repost;reposts.has(id)?reposts.delete(id):reposts.add(id);render();}if(b.dataset.download){let t=tracks.find(x=>x.id===b.dataset.download);if(t?.download&&t.url){let a=document.createElement('a');a.href=t.url;a.download=(t.title||'track')+'.mp3';a.click()}else alert('Download is not enabled for this track.') }});
-$('openUpload').onclick=()=>$('uploadModal').classList.add('show');$('cancelUpload').onclick=()=>$('uploadModal').classList.remove('show');
-$('saveUpload').onclick=()=>{let f=$('audioFile').files[0],title=$('title').value.trim(),artist=$('artist').value.trim();if(!f||!title||!artist){alert('Add a title, artist name, and audio file.');return}let url=URL.createObjectURL(f);let t={id:'u'+Date.now(),title,artist,genre:'Your upload',symbol:artist.slice(0,2).toUpperCase(),url,download:$('allowDownload').checked,likes:0,reposts:0,fileName:f.name};tracks.unshift(t);render();$('uploadModal').classList.remove('show');$('title').value='';$('artist').value='';$('audioFile').value='';};
-$('search').addEventListener('input',render);$('playPause').onclick=()=>{if(!current)return;if(audio.paused){audio.play();$('playPause').textContent='Ⅱ'}else{audio.pause();$('playPause').textContent='▶'}};
-$('volume').oninput=e=>audio.volume=Number(e.target.value);audio.addEventListener('timeupdate',()=>{$('elapsed').textContent=time(audio.currentTime);$('duration').textContent=time(audio.duration);$('seek').value=audio.duration?audio.currentTime/audio.duration*100:0});$('seek').oninput=e=>{if(audio.duration)audio.currentTime=Number(e.target.value)/100*audio.duration};audio.addEventListener('ended',()=>$('playPause').textContent='▶');
+
+let tracks = [...demoTracks];
+let likes = new Set();
+let reposts = new Set();
+let current = null;
+let artists = [];
+
+const audio = document.getElementById('audio');
+const $ = id => document.getElementById(id);
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+}
+
+function time(t) {
+  if (!Number.isFinite(t)) return '0:00';
+  return Math.floor(t / 60) + ':' +
+    String(Math.floor(t % 60)).padStart(2, '0');
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    credentials: 'same-origin',
+    ...options
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      data.error || data.message || `Request failed (${response.status})`
+    );
+  }
+
+  return data;
+}
+
+function trackHTML(t) {
+  return `
+    <div class="track">
+      <div class="cover">${esc(t.symbol || '7C')}</div>
+      <div class="trackinfo">
+        <div class="artist">${esc(t.artist)}
+          <span class="tag">${t.id.startsWith('u') ? 'YOUR UPLOAD' : 'TRACK'}</span>
+        </div>
+        <div class="name">${esc(t.title)}</div>
+        <div class="meta">${esc(t.genre || 'Independent music')}</div>
+      </div>
+      <div class="actions">
+        ${t.url ? `<button class="play" data-play="${esc(t.id)}">▶</button>` : ''}
+        <button class="${likes.has(t.id) ? 'on' : ''}" data-like="${esc(t.id)}">♥</button>
+        <button class="${reposts.has(t.id) ? 'on' : ''}" data-repost="${esc(t.id)}">⟳</button>
+      </div>
+    </div>`;
+}
+
+function render() {
+  const q = $('search').value.toLowerCase();
+
+  const filtered = tracks.filter(t =>
+    (t.title + ' ' + t.artist + ' ' + (t.genre || ''))
+      .toLowerCase().includes(q)
+  );
+
+  $('trackList').innerHTML =
+    filtered.filter(t => !t.id.startsWith('u')).map(trackHTML).join('') ||
+    '<div class="empty">No tracks match your search.</div>';
+
+  $('uploads').innerHTML =
+    filtered.filter(t => t.id.startsWith('u')).map(trackHTML).join('') ||
+    '<div class="empty">Your uploaded tracks will appear here.</div>';
+
+  $('likes').innerHTML =
+    tracks.filter(t => likes.has(t.id)).map(trackHTML).join('') ||
+    '<div class="empty">Tracks you heart will show up here.</div>';
+
+  $('count').textContent = filtered.length + ' tracks';
+}
+
+async function loadArtists() {
+  const select = $('artistSelect');
+
+  try {
+    const result = await api('/api/artists/mine');
+    artists = result.artists || result.data?.artists || [];
+
+    if (!artists.length) {
+      select.innerHTML = '<option value="">No artist profiles found</option>';
+      $('uploadMessage').textContent =
+        'No artist profiles found. Sign in and check your account.';
+      return;
+    }
+
+    select.innerHTML = artists.map(artist =>
+      `<option value="${esc(artist.id)}">${esc(artist.display_name)}</option>`
+    ).join('');
+
+    $('uploadMessage').textContent =
+      'Choose the artist profile for your upload.';
+  } catch (error) {
+    console.error('Artist loading error:', error);
+    select.innerHTML = '<option value="">Unable to load profiles</option>';
+    $('uploadMessage').textContent =
+      'Could not load artist profiles. Make sure you are signed in.';
+  }
+}
+
+async function initialize() {
+  try {
+    const auth = await api('/api/auth/me');
+
+    if (auth.authenticated) {
+      await loadArtists();
+    }
+  } catch (error) {
+    console.error('Authentication check:', error);
+  }
+}
+
+function play(id) {
+  const t = tracks.find(x => x.id === id);
+  if (!t || !t.url) return;
+
+  current = t;
+  audio.src = t.url;
+
+  audio.play().catch(() => {
+    alert('This audio source is unavailable.');
+  });
+
+  $('nowName').textContent = t.title;
+  $('nowArtist').textContent = t.artist;
+  $('nowCover').textContent = t.symbol || '7C';
+  $('playPause').textContent = 'Ⅱ';
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+
+  if (b.dataset.play) play(b.dataset.play);
+
+  if (b.dataset.like) {
+    const id = b.dataset.like;
+    likes.has(id) ? likes.delete(id) : likes.add(id);
+    render();
+  }
+
+  if (b.dataset.repost) {
+    const id = b.dataset.repost;
+    reposts.has(id) ? reposts.delete(id) : reposts.add(id);
+    render();
+  }
+});
+
+$('openUpload').onclick = async () => {
+  $('uploadModal').classList.add('show');
+  await loadArtists();
+};
+
+$('cancelUpload').onclick = () => {
+  $('uploadModal').classList.remove('show');
+};
+
+$('saveUpload').onclick = async () => {
+  const button = $('saveUpload');
+  const file = $('audioFile').files[0];
+  const title = $('title').value.trim();
+  const artistId = $('artistSelect').value;
+
+  if (!artistId) {
+    $('uploadMessage').textContent = 'Select an artist profile.';
+    return;
+  }
+
+  if (!title || !file) {
+    $('uploadMessage').textContent =
+      'Enter a track title and choose an audio file.';
+    return;
+  }
+
+  if (file.size > 50 * 1024 * 1024) {
+    $('uploadMessage').textContent =
+      'Your audio file must be 50 MB or smaller.';
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('artist_id', artistId);
+  formData.append('title', title);
+  formData.append('description', $('description').value.trim());
+  formData.append(
+    'visibility',
+    $('publicTrack').checked ? 'public' : 'private'
+  );
+  formData.append(
+    'download_enabled',
+    $('allowDownload').checked ? 'true' : 'false'
+  );
+  formData.append('audio', file);
+
+  button.disabled = true;
+  button.textContent = 'Uploading...';
+
+  $('uploadMessage').textContent =
+    'Uploading your track to $7im3Cl0ud...';
+
+  try {
+    const result = await api('/api/tracks/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!result.ok || !result.track) {
+      throw new Error(result.message || 'Upload was not confirmed.');
+    }
+
+    const artist = artists.find(a => a.id === artistId);
+
+    $('uploadMessage').textContent =
+      `Success! "${result.track.title}" uploaded to ${result.track.artist || artist?.display_name || 'your artist profile'}.`;
+
+    const uploadedTrack = {
+      id: 'u' + result.track.id,
+      title: result.track.title,
+      artist: result.track.artist || artist?.display_name || 'Artist',
+      genre: 'Your upload',
+      symbol: (artist?.display_name || '7C').slice(0, 2).toUpperCase(),
+      url: '',
+      download: $('allowDownload').checked,
+      likes: 0
+    };
+
+    tracks.unshift(uploadedTrack);
+    render();
+
+    $('title').value = '';
+    $('description').value = '';
+    $('audioFile').value = '';
+    $('allowDownload').checked = false;
+    $('publicTrack').checked = true;
+
+  } catch (error) {
+    console.error('Upload error:', error);
+    $('uploadMessage').textContent =
+      'Upload failed: ' + error.message;
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Upload track';
+  }
+};
+
+$('search').addEventListener('input', render);
+
+$('playPause').onclick = () => {
+  if (!current) return;
+
+  if (audio.paused) {
+    audio.play();
+    $('playPause').textContent = 'Ⅱ';
+  } else {
+    audio.pause();
+    $('playPause').textContent = '▶';
+  }
+};
+
+$('volume').oninput = e => {
+  audio.volume = Number(e.target.value);
+};
+
+audio.addEventListener('timeupdate', () => {
+  $('elapsed').textContent = time(audio.currentTime);
+  $('duration').textContent = time(audio.duration);
+  $('seek').value = audio.duration
+    ? audio.currentTime / audio.duration * 100
+    : 0;
+});
+
+$('seek').oninput = e => {
+  if (audio.duration) {
+    audio.currentTime = Number(e.target.value) / 100 * audio.duration;
+  }
+};
+
+audio.addEventListener('ended', () => {
+  $('playPause').textContent = '▶';
+});
+
 render();
+initialize();
 </script>
-</body></html>
+</body>
+</html>
