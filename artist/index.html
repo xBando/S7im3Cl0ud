@@ -111,8 +111,7 @@
 
   <script>
     const pathParts = window.location.pathname.split("/").filter(Boolean);
-const slug = pathParts[0] === "artist" ? (pathParts[1] || "") : "";
-    );
+    const slug = pathParts[0] === "artist" ? (pathParts[1] || "") : "";
 
     const nameEl = document.getElementById("artistName");
     const bioEl = document.getElementById("artistBio");
@@ -121,7 +120,7 @@ const slug = pathParts[0] === "artist" ? (pathParts[1] || "") : "";
     const tracksEl = document.getElementById("tracks");
 
     async function loadArtist() {
-      if (!slug || slug === "artist") {
+      if (!slug) {
         nameEl.textContent = "Artist not found";
         tracksEl.textContent = "No artist was specified.";
         return;
@@ -131,6 +130,7 @@ const slug = pathParts[0] === "artist" ? (pathParts[1] || "") : "";
         const response = await fetch(
           `/api/artists/tracks?slug=${encodeURIComponent(slug)}`
         );
+
         const data = await response.json();
 
         if (!response.ok || !data.ok || !data.artist) {
@@ -138,9 +138,11 @@ const slug = pathParts[0] === "artist" ? (pathParts[1] || "") : "";
         }
 
         const artist = data.artist;
+
         nameEl.textContent = artist.display_name;
         bioEl.textContent = artist.bio || "";
         slugEl.textContent = `@${artist.slug}`;
+
         avatarEl.textContent =
           (artist.display_name || "7").charAt(0).toUpperCase();
 
@@ -148,9 +150,11 @@ const slug = pathParts[0] === "artist" ? (pathParts[1] || "") : "";
 
         if (!data.tracks || data.tracks.length === 0) {
           tracksEl.innerHTML = "";
+
           const empty = document.createElement("div");
           empty.className = "empty muted";
           empty.textContent = "No tracks published yet. Check back soon.";
+
           tracksEl.appendChild(empty);
           return;
         }
@@ -177,6 +181,7 @@ const slug = pathParts[0] === "artist" ? (pathParts[1] || "") : "";
               `${Math.floor(track.duration_seconds / 60)}:${String(
                 track.duration_seconds % 60
               ).padStart(2, "0")}`;
+
             card.appendChild(duration);
           }
 
@@ -186,9 +191,11 @@ const slug = pathParts[0] === "artist" ? (pathParts[1] || "") : "";
         nameEl.textContent = "Unable to load artist";
         bioEl.textContent = "";
         tracksEl.innerHTML = "";
+
         const message = document.createElement("p");
         message.className = "error";
         message.textContent = error.message;
+
         tracksEl.appendChild(message);
       }
     }
@@ -197,4 +204,3 @@ const slug = pathParts[0] === "artist" ? (pathParts[1] || "") : "";
   </script>
 </body>
 </html>
-
