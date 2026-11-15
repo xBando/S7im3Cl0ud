@@ -88,15 +88,27 @@ export async function onRequestPost({ request, env }) {
       }, 400);
     }
 
-    const existing = await env.DB.prepare(
-  "SELECT id FROM artists WHERE user_id = ? OR slug = ? COLLATE NOCASE LIMIT 1"
+    const profileCount = await env.DB.prepare(
+  "SELECT COUNT(*) AS total FROM artists WHERE user_id = ?"
 )
-  .bind(user.id, slug)
+  .bind(user.id)
   .first();
 
-if (existing) {
+if (profileCount.total >= 3) {
   return json({
-    error: "You already have an artist profile, or that artist URL is taken."
+    error: "You can create a maximum of 3 artist profiles per account."
+  }, 403);
+}
+
+const existingSlug = await env.DB.prepare(
+  "SELECT id FROM artists WHERE slug = ? COLLATE NOCASE LIMIT 1"
+)
+  .bind(slug)
+  .first();
+
+if (existingSlug) {
+  return json({
+    error: "That artist URL is already taken."
   }, 409);
 }
 
