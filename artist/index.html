@@ -1,1 +1,200 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#a3ff12">
+  <title>Artist | $7im3Cl0ud</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #090b09;
+      color: #f4f7f0;
+      font-family: Arial, sans-serif;
+    }
+    header {
+      padding: 22px 7%;
+      border-bottom: 1px solid #252a22;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      color: #a3ff12;
+      font-size: 23px;
+      font-weight: 900;
+      text-decoration: none;
+    }
+    header a:last-child {
+      color: #b9c1b1;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    main {
+      width: min(900px, 88%);
+      margin: 65px auto;
+    }
+    .profile {
+      padding: 35px;
+      border: 1px solid #293020;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #18200e, #10130e 65%);
+    }
+    .avatar {
+      width: 105px;
+      height: 105px;
+      border-radius: 50%;
+      background: #a3ff12;
+      color: #10130b;
+      display: grid;
+      place-items: center;
+      font-size: 40px;
+      font-weight: 900;
+      margin-bottom: 22px;
+    }
+    h1 { font-size: clamp(32px, 6vw, 52px); margin: 0 0 12px; }
+    .bio { color: #b8c0b0; line-height: 1.7; }
+    .eyebrow {
+      color: #a3ff12;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .catalog { margin-top: 45px; }
+    .catalog h2 { font-size: 24px; }
+    .track, .empty {
+      padding: 22px;
+      background: #121611;
+      border: 1px solid #293020;
+      border-radius: 13px;
+      margin-top: 13px;
+    }
+    .track h3 { margin: 0 0 8px; }
+    .muted { color: #899184; font-size: 13px; }
+    .error { color: #ff8585; }
+    footer {
+      text-align: center;
+      color: #687064;
+      padding: 35px 15px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">$7im3Cl0ud</a>
+    <a href="/">Discover music</a>
+  </header>
+
+  <main>
+    <section class="profile">
+      <div class="avatar" id="avatar">7</div>
+      <div class="eyebrow">Artist profile</div>
+      <h1 id="artistName">Loading artist...</h1>
+      <p class="bio" id="artistBio"></p>
+      <p class="muted" id="artistSlug"></p>
+    </section>
+
+    <section class="catalog">
+      <div class="eyebrow">Music</div>
+      <h2>Tracks</h2>
+      <div id="tracks">
+        <div class="empty muted">Loading tracks...</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Powered by $7im3Cl0ud</footer>
+
+  <script>
+    const slug = decodeURIComponent(
+      window.location.pathname.split("/").filter(Boolean).pop() || ""
+    );
+
+    const nameEl = document.getElementById("artistName");
+    const bioEl = document.getElementById("artistBio");
+    const slugEl = document.getElementById("artistSlug");
+    const avatarEl = document.getElementById("avatar");
+    const tracksEl = document.getElementById("tracks");
+
+    async function loadArtist() {
+      if (!slug || slug === "artist") {
+        nameEl.textContent = "Artist not found";
+        tracksEl.textContent = "No artist was specified.";
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/artists/tracks?slug=${encodeURIComponent(slug)}`
+        );
+        const data = await response.json();
+
+        if (!response.ok || !data.ok || !data.artist) {
+          throw new Error(data.error || "Artist could not be found.");
+        }
+
+        const artist = data.artist;
+        nameEl.textContent = artist.display_name;
+        bioEl.textContent = artist.bio || "";
+        slugEl.textContent = `@${artist.slug}`;
+        avatarEl.textContent =
+          (artist.display_name || "7").charAt(0).toUpperCase();
+
+        document.title = `${artist.display_name} | $7im3Cl0ud`;
+
+        if (!data.tracks || data.tracks.length === 0) {
+          tracksEl.innerHTML = "";
+          const empty = document.createElement("div");
+          empty.className = "empty muted";
+          empty.textContent = "No tracks published yet. Check back soon.";
+          tracksEl.appendChild(empty);
+          return;
+        }
+
+        tracksEl.innerHTML = "";
+
+        for (const track of data.tracks) {
+          const card = document.createElement("article");
+          card.className = "track";
+
+          const title = document.createElement("h3");
+          title.textContent = track.title;
+
+          const description = document.createElement("p");
+          description.className = "muted";
+          description.textContent = track.description || "No description.";
+
+          card.append(title, description);
+
+          if (track.duration_seconds) {
+            const duration = document.createElement("span");
+            duration.className = "muted";
+            duration.textContent =
+              `${Math.floor(track.duration_seconds / 60)}:${String(
+                track.duration_seconds % 60
+              ).padStart(2, "0")}`;
+            card.appendChild(duration);
+          }
+
+          tracksEl.appendChild(card);
+        }
+      } catch (error) {
+        nameEl.textContent = "Unable to load artist";
+        bioEl.textContent = "";
+        tracksEl.innerHTML = "";
+        const message = document.createElement("p");
+        message.className = "error";
+        message.textContent = error.message;
+        tracksEl.appendChild(message);
+      }
+    }
+
+    loadArtist();
+  </script>
+</body>
+</html>
+
