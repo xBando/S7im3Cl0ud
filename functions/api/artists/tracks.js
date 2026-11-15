@@ -100,7 +100,7 @@ export async function onRequestGet({ request, env }) {
       FROM tracks
       WHERE artist_id = ?
         AND (
-          (visibility = 'public' AND status = 'ready')
+          (visibility = 'public' AND status = 'published')
           OR ? = 1
         )
       ORDER BY created_at DESC
