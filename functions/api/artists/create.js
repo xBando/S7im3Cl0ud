@@ -89,16 +89,16 @@ export async function onRequestPost({ request, env }) {
     }
 
     const existing = await env.DB.prepare(
-      "SELECT id FROM artists WHERE user_id = ? OR slug = ? COLLATE NOCASE LIMIT 1"
-    )
-      .bind(user.id, slug)
-      .first();
+  "SELECT id FROM artists WHERE user_id = ? OR slug = ? COLLATE NOCASE LIMIT 1"
+)
+  .bind(user.id, slug)
+  .first();
 
-    if (existing) {
-      return json({
-        error: "You already have an artist profile, or that artist URL is taken."
-      }, 409);
-    }
+if (existing) {
+  return json({
+    error: "You already have an artist profile, or that artist URL is taken."
+  }, 409);
+}
 
     const id = crypto.randomUUID();
 
