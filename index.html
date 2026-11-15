@@ -85,12 +85,40 @@ button,input{font:inherit}button{cursor:pointer;color:inherit}a{color:inherit;te
  <div><div class="controls"><button title="Previous">|◀</button><button class="big" id="playPause">▶</button><button title="Next">▶|</button><button title="Shuffle">⤨</button></div><div class="timeline"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="100" value="0"><span id="duration">0:00</span></div></div>
  <div class="volume"><span>◖</span><input id="volume" type="range" min="0" max="1" step=".01" value=".8"></div>
 </footer>
-<div class="modal" id="uploadModal"><div class="dialog"><h2>Upload your sound</h2><p>Add an audio file, choose whether listeners can download it, and publish it to this local demo library.</p>
- <label>Track title</label><input id="title" type="text" placeholder="Give your track a name">
- <label>Artist name</label><input id="artist" type="text" placeholder="Your artist name">
- <label>Audio file</label><input id="audioFile" type="file" accept="audio/*">
- <div class="checks"><label><input id="allowDownload" type="checkbox"> Allow downloads</label><label><input id="publicTrack" type="checkbox" checked> Public in this demo</label></div>
- <div class="rowbtn"><button class="secondary" id="cancelUpload">Cancel</button><button class="upload" id="saveUpload">Add track</button></div></div></div>
+<div class="modal" id="uploadModal">
+  <div class="dialog">
+    <h2>Upload your sound</h2>
+    <p>Your track will be uploaded to your selected artist profile.</p>
+
+    <label>Artist profile</label>
+    <select id="artistSelect"
+      style="width:100%;background:#252b21;color:white;border:1px solid #46513b;border-radius:5px;padding:10px">
+      <option value="">Loading your artist profiles...</option>
+    </select>
+
+    <label>Track title</label>
+    <input id="title" type="text" placeholder="Give your track a name">
+
+    <label>Description</label>
+    <input id="description" type="text" placeholder="Optional track description">
+
+    <label>Audio file</label>
+    <input id="audioFile" type="file"
+      accept=".mp3,.m4a,.aac,.wav,.ogg,.flac,.webm,audio/*">
+
+    <div class="checks">
+      <label><input id="allowDownload" type="checkbox"> Allow downloads</label>
+      <label><input id="publicTrack" type="checkbox" checked> Public</label>
+    </div>
+
+    <p id="uploadMessage" role="status"></p>
+
+    <div class="rowbtn">
+      <button class="secondary" id="cancelUpload">Cancel</button>
+      <button class="upload" id="saveUpload">Upload track</button>
+    </div>
+  </div>
+</div>
 <audio id="audio"></audio>
 <script>
 const demoTracks=[
