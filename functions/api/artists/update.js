@@ -16,47 +16,47 @@ export async function onRequest(context) {
   }
 
   try {
+    
     // 1. Read and verify the login session.
-    const cookieHeader = request.headers.get("Cookie") || "";
-    const sessionCookie = cookieHeader
-      .split(";")
-      .map(value => value.trim())
-      .find(value =>
-        value.startsWith("__Host-s7im3cl0ud_session=")
-      );
+    const cookie = request.headers.get("Cookie") || "";
 
-    if (!sessionCookie) {
+    const match = cookie.match(
+      /(?:^|;\s*)__Host-s7im3cl0ud_session=([a-f0-9]{64})(?:;|$)/
+    );
+
+    if (!match) {
       return json({ error: "Authentication required." }, 401);
     }
 
-    const token = sessionCookie.split("=").slice(1).join("=");
-
-    const tokenBytes = new TextEncoder().encode(token);
-    const tokenHashBuffer = await crypto.subtle.digest(
+    const digest = await crypto.subtle.digest(
       "SHA-256",
-      tokenBytes
+      new TextEncoder().encode(match[1])
     );
 
-    const tokenHash = Array.from(
-      new Uint8Array(tokenHashBuffer)
-    )
-      .map(byte => byte.toString(16).padStart(2, "0"))
-      .join("");
+    const bytes = new Uint8Array(digest);
+
+    let binary = "";
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
+    }
+
+    const tokenHash = btoa(binary);
 
     const user = await env.DB.prepare(`
       SELECT users.id
       FROM sessions
       JOIN users ON users.id = sessions.user_id
       WHERE sessions.token_hash = ?
-        AND julianday(sessions.expires_at) > julianday('now')
+        AND sessions.expires_at > ?
       LIMIT 1
     `)
-      .bind(tokenHash)
+      .bind(tokenHash, new Date().toISOString())
       .first();
 
     if (!user) {
       return json({ error: "Invalid or expired session." }, 401);
     }
+
 
     // 2. Read the requested changes.
     let body;
