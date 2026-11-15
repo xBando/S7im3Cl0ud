@@ -56,14 +56,12 @@ export async function onRequestPost({ request, env }) {
       return json({ error: "Storage or database unavailable." }, 503);
     }
 
-    // Authenticate the uploader.
     const user = await getUser(request, env);
 
     if (!user) {
       return json({ error: "You must be logged in to upload." }, 401);
     }
 
-    // Read the submitted upload form.
     const form = await request.formData();
 
     const artistId = String(form.get("artist_id") || "").trim();
@@ -87,7 +85,6 @@ export async function onRequestPost({ request, env }) {
       return json({ error: "Invalid track visibility." }, 400);
     }
 
-    // Initial upload limit: 50 MB.
     const MAX_SIZE = 50 * 1024 * 1024;
 
     if (audio.size === 0 || audio.size > MAX_SIZE) {
@@ -96,7 +93,6 @@ export async function onRequestPost({ request, env }) {
       }, 400);
     }
 
-    // Only accept recognized audio formats.
     const allowedExtensions = [
       "mp3", "m4a", "aac", "wav", "ogg", "flac", "webm"
     ];
@@ -114,7 +110,6 @@ export async function onRequestPost({ request, env }) {
       return json({ error: "The uploaded file must be audio." }, 400);
     }
 
-    // Confirm the artist belongs to the logged-in user.
     const artist = await env.DB.prepare(
       `SELECT id, display_name
        FROM artists
@@ -130,13 +125,11 @@ export async function onRequestPost({ request, env }) {
       }, 403);
     }
 
-    // Generate a private, unpredictable R2 storage key.
     storageKey =
       `tracks/${user.id}/${crypto.randomUUID()}.${extension}`;
 
     const contentType = audio.type || "application/octet-stream";
 
-    // Upload the actual audio file to R2.
     await env.MUSIC_BUCKET.put(
       storageKey,
       audio.stream(),
@@ -154,7 +147,6 @@ export async function onRequestPost({ request, env }) {
 
     const trackId = crypto.randomUUID();
 
-    // Save track information in D1 after the R2 upload succeeds.
     await env.DB.prepare(
       `INSERT INTO tracks (
         id,
@@ -167,7 +159,7 @@ export async function onRequestPost({ request, env }) {
         status,
         download_enabled
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'ready', ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'ready', ?)`
     )
       .bind(
         trackId,
@@ -189,14 +181,13 @@ export async function onRequestPost({ request, env }) {
         artist: artist.display_name,
         title,
         visibility,
-        status: "published"
+        status: "ready"
       }
     }, 201);
 
   } catch (error) {
     console.error("Track upload error:", error);
 
-    // Remove the R2 object if saving its database record failed.
     if (storageKey && env.MUSIC_BUCKET) {
       try {
         await env.MUSIC_BUCKET.delete(storageKey);
@@ -210,4 +201,3 @@ export async function onRequestPost({ request, env }) {
     }, 500);
   }
 }
-
