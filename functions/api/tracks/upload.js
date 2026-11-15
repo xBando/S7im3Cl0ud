@@ -167,7 +167,7 @@ export async function onRequestPost({ request, env }) {
         status,
         download_enabled
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'published', ?)`
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'ready', ?)
     )
       .bind(
         trackId,
