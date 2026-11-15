@@ -1,1 +1,522 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#a3ff12">
+  <title>Artist Dashboard | $7im3Cl0ud</title>
+
+  <style>
+    :root {
+      --green: #a3ff12;
+      --bg: #090b09;
+      --panel: #141814;
+      --panel2: #1c221b;
+      --text: #f4f7f0;
+      --muted: #929b8d;
+      --border: #30392d;
+      --danger: #ff6565;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      min-height: 100vh;
+    }
+
+    button, input, textarea { font: inherit; }
+
+    button { cursor: pointer; }
+
+    .topbar {
+      height: 76px;
+      padding: 0 5%;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .logo {
+      color: var(--green);
+      font-size: 23px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .status {
+      color: var(--green);
+      font-size: 12px;
+    }
+
+    .logout {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 15px;
+      border-radius: 8px;
+    }
+
+    .container {
+      width: min(1100px, 90%);
+      margin: 45px auto;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(30px, 5vw, 44px);
+      margin: 10px 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 35px;
+      line-height: 1.6;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 23px;
+    }
+
+    .panel h2 {
+      font-size: 17px;
+      margin: 0 0 18px;
+    }
+
+    .profile-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .profile-choice {
+      width: 100%;
+      text-align: left;
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 14px;
+    }
+
+    .profile-choice.active {
+      border-color: var(--green);
+      background: #202b17;
+    }
+
+    .profile-choice strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .profile-choice small {
+      color: var(--muted);
+    }
+
+    .profile-count {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 17px;
+    }
+
+    .field {
+      margin-bottom: 19px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: #d9e2d3;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid var(--border);
+      background: #0d100d;
+      color: var(--text);
+      border-radius: 8px;
+      outline: none;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--green);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .slug-preview {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+      overflow-wrap: anywhere;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .primary {
+      background: var(--green);
+      color: #10140b;
+      border: 0;
+      border-radius: 8px;
+      padding: 13px 20px;
+      font-weight: bold;
+    }
+
+    .secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 13px 18px;
+    }
+
+    .message {
+      min-height: 22px;
+      font-size: 13px;
+      margin-top: 15px;
+      color: var(--green);
+      overflow-wrap: anywhere;
+    }
+
+    .message.error { color: var(--danger); }
+
+    .empty {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .footer {
+      border-top: 1px solid var(--border);
+      margin-top: 55px;
+      padding: 25px 5%;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 700px) {
+      .topbar { padding: 0 5%; }
+      .container { margin-top: 30px; }
+      .layout { grid-template-columns: 1fr; }
+      .top-actions { gap: 9px; }
+      .status { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="logo">$7im3Cl0ud</div>
+    <div class="top-actions">
+      <span class="status" id="accountStatus">Checking account...</span>
+      <button class="logout" id="logoutButton">Log out</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="eyebrow">Creator Studio</div>
+    <h1>Artist Dashboard</h1>
+    <p class="subtitle">
+      Manage your artist identities and keep your music presence up to date.
+    </p>
+
+    <div class="layout">
+      <aside class="panel">
+        <h2>Your artists</h2>
+        <div class="profile-list" id="profileList">
+          Loading profiles...
+        </div>
+        <div class="profile-count" id="profileCount"></div>
+      </aside>
+
+      <section class="panel">
+        <h2>Edit artist profile</h2>
+
+        <div id="editor" hidden>
+          <form id="profileForm">
+            <div class="field">
+              <label for="displayName">Artist display name</label>
+              <input
+                id="displayName"
+                maxlength="50"
+                minlength="2"
+                required
+              >
+            </div>
+
+            <div class="field">
+              <label for="slug">Artist URL</label>
+              <input
+                id="slug"
+                maxlength="30"
+                minlength="3"
+                pattern="[a-z0-9_-]+"
+                required
+              >
+              <div class="slug-preview" id="slugPreview"></div>
+            </div>
+
+            <div class="field">
+              <label for="bio">Artist biography</label>
+              <textarea id="bio" maxlength="500"></textarea>
+            </div>
+
+            <div class="actions">
+              <button class="primary" type="submit">
+                Save changes
+              </button>
+              <button class="secondary" type="button" id="viewProfile">
+                View public profile
+              </button>
+            </div>
+
+            <div class="message" id="message" role="status"></div>
+          </form>
+        </div>
+
+        <div class="empty" id="emptyState">
+          Select an artist profile to manage it.
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    $7im3Cl0ud · Independent music platform
+  </footer>
+
+  <script>
+    const profileList = document.getElementById("profileList");
+    const profileCount = document.getElementById("profileCount");
+    const editor = document.getElementById("editor");
+    const emptyState = document.getElementById("emptyState");
+    const accountStatus = document.getElementById("accountStatus");
+    const message = document.getElementById("message");
+
+    const displayName = document.getElementById("displayName");
+    const slug = document.getElementById("slug");
+    const bio = document.getElementById("bio");
+    const slugPreview = document.getElementById("slugPreview");
+
+    let artists = [];
+    let selectedArtist = null;
+
+    async function api(url, options = {}) {
+      const response = await fetch(url, {
+        credentials: "same-origin",
+        ...options
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Request failed.");
+      }
+
+      return data;
+    }
+
+    function showMessage(text, isError = false) {
+      message.textContent = text;
+      message.className = isError
+        ? "message error"
+        : "message";
+    }
+
+    function renderProfiles() {
+      profileList.replaceChildren();
+
+      if (artists.length === 0) {
+        profileList.textContent = "No artist profiles found.";
+        return;
+      }
+
+      artists.forEach(artist => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "profile-choice";
+
+        if (selectedArtist && artist.id === selectedArtist.id) {
+          button.classList.add("active");
+        }
+
+        const name = document.createElement("strong");
+        name.textContent = artist.display_name;
+
+        const url = document.createElement("small");
+        url.textContent = "/" + artist.slug;
+
+        button.append(name, url);
+
+        button.addEventListener("click", () => {
+          selectArtist(artist);
+        });
+
+        profileList.appendChild(button);
+      });
+
+      profileCount.textContent =
+        `${artists.length} of 3 artist profiles`;
+    }
+
+    function selectArtist(artist) {
+      selectedArtist = artist;
+
+      displayName.value = artist.display_name;
+      slug.value = artist.slug;
+      bio.value = artist.bio || "";
+
+      slugPreview.textContent =
+        `${location.origin}/artist/${artist.slug}`;
+
+      editor.hidden = false;
+      emptyState.hidden = true;
+
+      showMessage("");
+      renderProfiles();
+    }
+
+    slug.addEventListener("input", () => {
+      slugPreview.textContent =
+        `${location.origin}/artist/${slug.value}`;
+    });
+
+    document.getElementById("profileForm").addEventListener(
+      "submit",
+      async event => {
+        event.preventDefault();
+
+        if (!selectedArtist) return;
+
+        showMessage("Saving changes...");
+
+        try {
+          const result = await api("/api/artists/update", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              artist_id: selectedArtist.id,
+              display_name: displayName.value.trim(),
+              slug: slug.value.trim(),
+              bio: bio.value
+            })
+          });
+
+          const updated = result.artist;
+
+          artists = artists.map(artist =>
+            artist.id === updated.id ? updated : artist
+          );
+
+          selectedArtist = updated;
+
+          selectArtist(updated);
+          showMessage("Artist profile saved successfully.");
+
+        } catch (error) {
+          showMessage(error.message, true);
+        }
+      }
+    );
+
+    document.getElementById("viewProfile").addEventListener(
+      "click",
+      () => {
+        if (!selectedArtist) return;
+
+        window.open(
+          `/artist/${encodeURIComponent(selectedArtist.slug)}`,
+          "_blank",
+          "noopener"
+        );
+      }
+    );
+
+    document.getElementById("logoutButton").addEventListener(
+      "click",
+      async () => {
+        try {
+          await api("/api/auth/logout", { method: "POST" });
+          location.href = "/";
+        } catch (error) {
+          alert(error.message);
+        }
+      }
+    );
+
+    async function initializeDashboard() {
+      try {
+        const session = await api("/api/auth/me");
+
+        if (!session.authenticated) {
+          location.href = "/";
+          return;
+        }
+
+        accountStatus.textContent =
+          `Signed in as ${session.user.username}`;
+
+        const result = await api("/api/artists/mine");
+
+        artists = result.artists || [];
+
+        renderProfiles();
+
+        if (artists.length > 0) {
+          selectArtist(artists[0]);
+        } else {
+          profileList.textContent = "No artist profiles yet.";
+          profileCount.textContent = "0 of 3 artist profiles";
+        }
+
+      } catch (error) {
+        accountStatus.textContent = "Session unavailable";
+        profileList.textContent = error.message;
+      }
+    }
+
+    initializeDashboard();
+  </script>
+</body>
+</html>
+
