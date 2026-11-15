@@ -34,15 +34,20 @@ export async function onRequestGet({ request, env }) {
     const url = new URL(request.url);
     const slug = url.searchParams.get("slug");
 
-    if (
-      !slug ||
-      !/^[a-z0-9_-]{3,30}$/.test(slug)
-    ) {
+    if (!slug || !/^[a-z0-9_-]{3,30}$/.test(slug)) {
       return json({ error: "A valid artist slug is required." }, 400);
     }
 
+    // Find artist, including ownership information.
     const artist = await env.DB.prepare(`
-      SELECT id, display_name, slug, bio, avatar_key, banner_key
+      SELECT
+        id,
+        user_id,
+        display_name,
+        slug,
+        bio,
+        avatar_key,
+        banner_key
       FROM artists
       WHERE slug = ? COLLATE NOCASE
       LIMIT 1
@@ -54,7 +59,7 @@ export async function onRequestGet({ request, env }) {
       return json({ error: "Artist not found." }, 404);
     }
 
-    // Check whether the visitor owns this artist profile.
+    // Verify whether the visitor owns this profile.
     const cookie = request.headers.get("Cookie") || "";
 
     const match = cookie.match(
@@ -80,21 +85,24 @@ export async function onRequestGet({ request, env }) {
       isOwner = !!session && session.id === artist.user_id;
     }
 
-    // Public visitors only see published tracks.
-    // Owners can also see unpublished tracks.
+    // Public visitors only see public, ready tracks.
+    // Owners can see all tracks belonging to their profile.
     const tracks = await env.DB.prepare(`
       SELECT
         id,
         title,
         description,
         duration_seconds,
-        cover_key,
-        audio_key,
-        created_at,
-        published
+        visibility,
+        status,
+        download_enabled,
+        created_at
       FROM tracks
       WHERE artist_id = ?
-        AND (published = 1 OR ? = 1)
+        AND (
+          (visibility = 'public' AND status = 'ready')
+          OR ? = 1
+        )
       ORDER BY created_at DESC
     `)
       .bind(artist.id, isOwner ? 1 : 0)
