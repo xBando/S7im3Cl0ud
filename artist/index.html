@@ -110,8 +110,8 @@
   <footer>Powered by $7im3Cl0ud</footer>
 
   <script>
-    const slug = decodeURIComponent(
-      window.location.pathname.split("/").filter(Boolean).pop() || ""
+    const pathParts = window.location.pathname.split("/").filter(Boolean);
+const slug = pathParts[0] === "artist" ? (pathParts[1] || "") : "";
     );
 
     const nameEl = document.getElementById("artistName");
