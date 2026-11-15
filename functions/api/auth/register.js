@@ -1,0 +1,102 @@
+
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store"
+    }
+  });
+}
+
+function randomId() {
+  return crypto.randomUUID();
+}
+
+async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt,
+      iterations: 600000,
+      hash: "SHA-256"
+    },
+    key,
+    256
+  );
+
+  const bytes = new Uint8Array(bits);
+  const combined = new Uint8Array(salt.length + bytes.length);
+  combined.set(salt);
+  combined.set(bytes, salt.length);
+
+  return btoa(String.fromCharCode(...combined));
+}
+
+export async function onRequestPost({ request, env }) {
+  try {
+    if (!env.DB) {
+      return json({ error: "Database unavailable" }, 503);
+    }
+
+    const body = await request.json();
+    const username = String(body.username || "").trim();
+    const email = String(body.email || "").trim().toLowerCase();
+    const password = String(body.password || "");
+
+    if (!/^[a-zA-Z0-9_]{3,24}$/.test(username)) {
+      return json({
+        error: "Username must be 3–24 characters using letters, numbers, or underscores."
+      }, 400);
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+      return json({ error: "Enter a valid email address." }, 400);
+    }
+
+    if (password.length < 12 || new TextEncoder().encode(password).length > 128) {
+      return json({
+        error: "Password must be at least 12 characters and no more than 128 bytes."
+      }, 400);
+    }
+
+    const existing = await env.DB.prepare(
+      "SELECT id FROM users WHERE username = ? COLLATE NOCASE OR email = ? COLLATE NOCASE LIMIT 1"
+    ).bind(username, email).first();
+
+    if (existing) {
+      return json({
+        error: "That username or email is already registered."
+      }, 409);
+    }
+
+    const id = randomId();
+    const passwordHash = await hashPassword(password);
+
+    await env.DB.prepare(
+      "INSERT INTO users (id, username, email, password_hash) VALUES (?, ?, ?, ?)"
+    ).bind(id, username, email, passwordHash).run();
+
+    return json({
+      ok: true,
+      message: "Account created. You can now sign in.",
+      user: { id, username, email }
+    }, 201);
+
+  } catch (error) {
+    if (error && error.message && error.message.includes("UNIQUE constraint failed")) {
+      return json({ error: "That username or email is already registered." }, 409);
+    }
+
+    return json({ error: "Registration failed. Please try again." }, 500);
+  }
+}
