@@ -93,10 +93,15 @@ export async function onRequestPost({ request, env }) {
     }, 201);
 
   } catch (error) {
-    if (error && error.message && error.message.includes("UNIQUE constraint failed")) {
-      return json({ error: "That username or email is already registered." }, 409);
+    console.error("Registration error:", error);
+
+    if (error?.message?.includes("UNIQUE constraint failed")) {
+      return json({
+        error: "That username or email is already registered."
+      }, 409);
     }
 
-    return json({ error: "Registration failed. Please try again." }, 500);
+    return json({
+      error: "Registration failed. Please check Cloudflare function logs."
+    }, 500);
   }
-}
