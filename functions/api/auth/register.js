@@ -92,7 +92,7 @@ export async function onRequestPost({ request, env }) {
       user: { id, username, email }
     }, 201);
 
-  } catch (error) {
+    } catch (error) {
     console.error("Registration error:", error);
 
     if (error?.message?.includes("UNIQUE constraint failed")) {
