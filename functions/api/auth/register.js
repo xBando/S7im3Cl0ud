@@ -118,12 +118,17 @@ export async function onRequestPost({ request, env }) {
     }, 201);
 
 
-  } catch (error) {
+    } catch (error) {
     console.error("Registration error:", error);
 
+    if (error?.message?.includes("UNIQUE constraint failed")) {
+      return json({
+        error: "That username or email is already registered."
+      }, 409);
+    }
+
     return json({
-      error: "Registration diagnostic",
-      details: String(error?.message || error)
+      error: "Registration failed. Please try again."
     }, 500);
   }
 }
