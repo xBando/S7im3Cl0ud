@@ -29,12 +29,11 @@
       min-height: 100vh;
     }
 
-    button, input, textarea { font: inherit; }
-
+    button, input, textarea, select { font: inherit; }
     button { cursor: pointer; }
 
     .topbar {
-      height: 76px;
+      min-height: 76px;
       padding: 0 5%;
       border-bottom: 1px solid var(--border);
       display: flex;
@@ -147,9 +146,7 @@
       margin-top: 17px;
     }
 
-    .field {
-      margin-bottom: 19px;
-    }
+    .field { margin-bottom: 19px; }
 
     label {
       display: block;
@@ -158,7 +155,7 @@
       color: #d9e2d3;
     }
 
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       padding: 13px;
       border: 1px solid var(--border);
@@ -168,13 +165,31 @@
       outline: none;
     }
 
-    input:focus, textarea:focus {
+    input:focus, textarea:focus, select:focus {
       border-color: var(--green);
     }
 
     textarea {
       resize: vertical;
       min-height: 120px;
+    }
+
+    input[type="file"] {
+      padding: 11px;
+      cursor: pointer;
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      accent-color: var(--green);
+      margin-right: 8px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--muted);
     }
 
     .slug-preview {
@@ -200,6 +215,11 @@
       font-weight: bold;
     }
 
+    .primary:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
     .secondary {
       background: transparent;
       border: 1px solid var(--border);
@@ -221,6 +241,23 @@
     .empty {
       color: var(--muted);
       line-height: 1.6;
+    }
+
+    .upload-panel {
+      margin-top: 22px;
+    }
+
+    .upload-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+      margin: 0 0 22px;
+    }
+
+    .selected-artist {
+      color: var(--green);
+      font-size: 13px;
+      margin-bottom: 22px;
     }
 
     .footer {
@@ -317,6 +354,80 @@
         </div>
       </section>
     </div>
+
+    <section class="panel upload-panel" id="uploadPanel" hidden>
+      <div class="eyebrow">Music management</div>
+      <h2>Upload a track</h2>
+
+      <p class="upload-note">
+        Upload original music or audio you have permission to distribute.
+        Maximum file size: 50 MB.
+      </p>
+
+      <div class="selected-artist" id="uploadArtist">
+        Select an artist first.
+      </div>
+
+      <form id="uploadForm">
+        <div class="field">
+          <label for="trackTitle">Track title</label>
+          <input
+            id="trackTitle"
+            name="title"
+            maxlength="120"
+            placeholder="Enter track title"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label for="trackDescription">Description</label>
+          <textarea
+            id="trackDescription"
+            name="description"
+            maxlength="2000"
+            placeholder="Tell listeners about this track..."
+          ></textarea>
+        </div>
+
+        <div class="field">
+          <label for="audioFile">Audio file</label>
+          <input
+            id="audioFile"
+            name="audio"
+            type="file"
+            accept=".mp3,.m4a,.aac,.wav,.ogg,.flac,.webm,audio/*"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label for="visibility">Track visibility</label>
+          <select id="visibility" name="visibility">
+            <option value="public">Public — everyone can listen</option>
+            <option value="private">Private — hidden from public</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="checkbox-label">
+            <input
+              id="downloadEnabled"
+              type="checkbox"
+            >
+            Allow listeners to download this track
+          </label>
+        </div>
+
+        <div class="actions">
+          <button class="primary" type="submit" id="uploadButton">
+            Upload track
+          </button>
+        </div>
+
+        <div class="message" id="uploadMessage" role="status"></div>
+      </form>
+    </section>
   </main>
 
   <footer class="footer">
@@ -335,6 +446,12 @@
     const slug = document.getElementById("slug");
     const bio = document.getElementById("bio");
     const slugPreview = document.getElementById("slugPreview");
+
+    const uploadPanel = document.getElementById("uploadPanel");
+    const uploadArtist = document.getElementById("uploadArtist");
+    const uploadForm = document.getElementById("uploadForm");
+    const uploadMessage = document.getElementById("uploadMessage");
+    const uploadButton = document.getElementById("uploadButton");
 
     let artists = [];
     let selectedArtist = null;
@@ -357,6 +474,13 @@
     function showMessage(text, isError = false) {
       message.textContent = text;
       message.className = isError
+        ? "message error"
+        : "message";
+    }
+
+    function showUploadMessage(text, isError = false) {
+      uploadMessage.textContent = text;
+      uploadMessage.className = isError
         ? "message error"
         : "message";
     }
@@ -410,7 +534,12 @@
       editor.hidden = false;
       emptyState.hidden = true;
 
+      uploadPanel.hidden = false;
+      uploadArtist.textContent =
+        `Uploading to: ${artist.display_name}`;
+
       showMessage("");
+      showUploadMessage("");
       renderProfiles();
     }
 
@@ -472,6 +601,74 @@
       }
     );
 
+    uploadForm.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      if (!selectedArtist) {
+        showUploadMessage("Select an artist first.", true);
+        return;
+      }
+
+      const audioFile = document.getElementById("audioFile").files[0];
+
+      if (!audioFile) {
+        showUploadMessage("Choose an audio file.", true);
+        return;
+      }
+
+      if (audioFile.size > 50 * 1024 * 1024) {
+        showUploadMessage("The maximum file size is 50 MB.", true);
+        return;
+      }
+
+      const formData = new FormData();
+
+      formData.append("artist_id", selectedArtist.id);
+      formData.append(
+        "title",
+        document.getElementById("trackTitle").value.trim()
+      );
+      formData.append(
+        "description",
+        document.getElementById("trackDescription").value.trim()
+      );
+      formData.append(
+        "visibility",
+        document.getElementById("visibility").value
+      );
+      formData.append(
+        "download_enabled",
+        document.getElementById("downloadEnabled").checked
+          ? "true"
+          : "false"
+      );
+      formData.append("audio", audioFile);
+
+      uploadButton.disabled = true;
+      uploadButton.textContent = "Uploading...";
+      showUploadMessage("Uploading your audio to $7im3Cl0ud...");
+
+      try {
+        const result = await api("/api/tracks/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        showUploadMessage(
+          `Success! "${result.track.title}" was uploaded to ${result.track.artist}.`
+        );
+
+        uploadForm.reset();
+
+      } catch (error) {
+        showUploadMessage(error.message, true);
+
+      } finally {
+        uploadButton.disabled = false;
+        uploadButton.textContent = "Upload track";
+      }
+    });
+
     document.getElementById("logoutButton").addEventListener(
       "click",
       async () => {
@@ -519,4 +716,3 @@
   </script>
 </body>
 </html>
-
