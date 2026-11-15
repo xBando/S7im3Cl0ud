@@ -17,3 +17,4 @@ This is a front-end prototype. Uploads use browser-local object URLs and are not
 To launch worldwide, connect this UI to a backend (for example: authentication + database + object storage + transcoding/CDN), implement creator-controlled download permissions server-side, and establish rights, takedown, abuse-reporting, and privacy workflows. Do not scrape or rehost other platforms' catalogs; ingest only music the uploader owns or is authorized to distribute.
 
 The visual language is inspired by common music-streaming patterns but is not an exact copy of SoundCloud's proprietary interface or branding.
+Production redeploy test
